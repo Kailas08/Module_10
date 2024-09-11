@@ -1,47 +1,38 @@
 import threading
-from time import sleep
-
-# Начальное количество врагов (всем рыцарям)
-ENEMIES = 100
-lock = threading.Lock()
-
+import time
 
 class Knight(threading.Thread):
-    def __init__(self, name, power):
+    def __init__(self, name, turn_interval, initial_enemies, enemies_per_day):
         super().__init__()
         self.name = name
-        self.power = power
-        self.days = 0
+        self.enemies = initial_enemies
+        self.turn_interval = turn_interval
+        self.enemies_per_day = enemies_per_day
+        self.days_fought = 0
 
     def run(self):
-        global ENEMIES
-        with lock:
-            print(f"{self.name}, на нас напали!")
+        while self.enemies > 0:
+            time.sleep(self.turn_interval)
+            if self.enemies > 0:
+                to_fight = min(self.enemies, self.enemies_per_day)
+                self.enemies -= to_fight
+                self.days_fought += 1
+                print(f"{self.name} побеждает {to_fight} врагов. Осталось врагов: {self.enemies}")
 
-        while ENEMIES > 0:
-            sleep(1)
-            self.days += 1
-            with lock:
-                if ENEMIES > 0:
-                    ENEMIES -= self.power
-                    if ENEMIES > 0:
-                        print(f"{self.name}, сражается {self.days} день(дня)..., осталось {max(0, ENEMIES)} воинов.")
-                    else:
-                        ENEMIES = 0
-                        print(f"{self.name} одержал победу спустя {self.days} дней(дня)!")
-                        break
+        print(f"{self.name} одержал победу за {self.days_fought} дней!")
 
+# Начальное количество врагов
+initial_enemies = 100
 
-# Создание рыцарей
-first_knight = Knight('Sir Lancelot', 10)
-second_knight = Knight("Sir Galahad", 20)
+print("На нас напали!")
 
-# Запуск потоков
-first_knight.start()
-second_knight.start()
+sir_galahad = Knight("Sir Galahad", 1, initial_enemies, 20)
+sir_lancelot = Knight("Sir Lancelot", 2, initial_enemies, 10)
 
-# Ожидание завершения всех потоков
-first_knight.join()
-second_knight.join()
+sir_galahad.start()
+sir_lancelot.start()
+
+sir_galahad.join()
+sir_lancelot.join()
 
 print("Все битвы закончились!")
